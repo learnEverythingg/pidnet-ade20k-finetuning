@@ -27,12 +27,14 @@ from utils.function import train, validate
 from utils.utils import create_logger, FullModel
 
 
+os.environ['CUDA_LAUNCH_BLOCKING'] = '1'
+
 def parse_args():
     parser = argparse.ArgumentParser(description='Train segmentation network')
     
     parser.add_argument('--cfg',
                         help='experiment configure file name',
-                        default="configs/cityscapes/pidnet_small_cityscapes.yaml",
+                        default="./configs/ade20k/pidnet_small_ade20k_trainval.yml",
                         type=str)
     parser.add_argument('--seed', type=int, default=304)    
     parser.add_argument('opts',
@@ -84,14 +86,16 @@ def main():
     crop_size = (config.TRAIN.IMAGE_SIZE[1], config.TRAIN.IMAGE_SIZE[0])
     train_dataset = eval('datasets.'+config.DATASET.DATASET)(
                         root=config.DATASET.ROOT,
-                        list_path=config.DATASET.TRAIN_SET,
+                        mode="train",
                         num_classes=config.DATASET.NUM_CLASSES,
                         multi_scale=config.TRAIN.MULTI_SCALE,
                         flip=config.TRAIN.FLIP,
                         ignore_label=config.TRAIN.IGNORE_LABEL,
                         base_size=config.TRAIN.BASE_SIZE,
                         crop_size=crop_size,
-                        scale_factor=config.TRAIN.SCALE_FACTOR)
+                        scale_factor=config.TRAIN.SCALE_FACTOR,
+                        object_file=config.DATASET.OBJECT_PATH)
+
 
     trainloader = torch.utils.data.DataLoader(
         train_dataset,
@@ -105,13 +109,14 @@ def main():
     test_size = (config.TEST.IMAGE_SIZE[1], config.TEST.IMAGE_SIZE[0])
     test_dataset = eval('datasets.'+config.DATASET.DATASET)(
                         root=config.DATASET.ROOT,
-                        list_path=config.DATASET.TEST_SET,
+                        mode="test",
                         num_classes=config.DATASET.NUM_CLASSES,
                         multi_scale=False,
                         flip=False,
                         ignore_label=config.TRAIN.IGNORE_LABEL,
                         base_size=config.TEST.BASE_SIZE,
-                        crop_size=test_size)
+                        crop_size=test_size,
+                        object_file=config.DATASET.OBJECT_PATH)
 
     testloader = torch.utils.data.DataLoader(
         test_dataset,
@@ -124,11 +129,10 @@ def main():
     if config.LOSS.USE_OHEM:
         sem_criterion = OhemCrossEntropy(ignore_label=config.TRAIN.IGNORE_LABEL,
                                         thres=config.LOSS.OHEMTHRES,
-                                        min_kept=config.LOSS.OHEMKEEP,
-                                        weight=train_dataset.class_weights)
+                                        min_kept=config.LOSS.OHEMKEEP)
     else:
-        sem_criterion = CrossEntropy(ignore_label=config.TRAIN.IGNORE_LABEL,
-                                    weight=train_dataset.class_weights)
+        sem_criterion = CrossEntropy(ignore_label=config.TRAIN.IGNORE_LABEL)
+
 
     bd_criterion = BondaryLoss()
     
@@ -146,6 +150,14 @@ def main():
                                 weight_decay=config.TRAIN.WD,
                                 nesterov=config.TRAIN.NESTEROV,
                                 )
+    elif config.TRAIN.OPTIMIZER == 'adam':
+        params_dict = dict(model.named_parameters())
+        params = [{'params': list(params_dict.values()), 'lr': config.TRAIN.LR}]
+
+        optimizer = torch.optim.Adam(params,
+                                     lr=config.TRAIN.LR,
+                                     weight_decay=config.TRAIN.WD,
+                                )
     else:
         raise ValueError('Only Support SGD optimizer')
 
@@ -157,7 +169,7 @@ def main():
     if config.TRAIN.RESUME:
         model_state_file = os.path.join(final_output_dir, 'checkpoint.pth.tar')
         if os.path.isfile(model_state_file):
-            checkpoint = torch.load(model_state_file, map_location={'cuda:0': 'cpu'})
+            checkpoint = torch.load(model_state_file, map_location={'cuda:0': 'cpu'}, weights_only=False)
             best_mIoU = checkpoint['best_mIoU']
             last_epoch = checkpoint['epoch']
             dct = checkpoint['state_dict']
@@ -181,7 +193,7 @@ def main():
                   epoch_iters, config.TRAIN.LR, num_iters,
                   trainloader, optimizer, model, writer_dict)
 
-        if flag_rm == 1 or (epoch % 5 == 0 and epoch < real_end - 100) or (epoch >= real_end - 100):
+        if flag_rm == 1 or (epoch % 3 == 0 ):
             valid_loss, mean_IoU, IoU_array = validate(config, 
                         testloader, model, writer_dict)
         if flag_rm == 1:
@@ -211,7 +223,7 @@ def main():
 
     writer_dict['writer'].close()
     end = timeit.default_timer()
-    logger.info('Hours: %d' % np.int((end-start)/3600))
+    logger.info('Hours: %d' % int((end-start)/3600))
     logger.info('Done')
 
 if __name__ == '__main__':

@@ -12,7 +12,7 @@ import models
 import torch
 import torch.nn.functional as F
 from PIL import Image
-
+import time
 mean = [0.485, 0.456, 0.406]
 std = [0.229, 0.224, 0.225]
 
@@ -34,16 +34,18 @@ color_map = [(128, 64,128),
              (  0, 60,100),
              (  0, 80,100),
              (  0,  0,230),
-             (119, 11, 32)]
+             (119, 11, 32),
+             (200, 50, 90),
+             (60, 190, 20)]
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Custom Input')
     
-    parser.add_argument('--a', help='pidnet-s, pidnet-m or pidnet-l', default='pidnet-l', type=str)
+    parser.add_argument('--a', help='pidnet-s, pidnet-m or pidnet-l', default='pidnet-s', type=str)
     parser.add_argument('--c', help='cityscapes pretrained or not', type=bool, default=True)
-    parser.add_argument('--p', help='dir for pretrained model', default='../pretrained_models/cityscapes/PIDNet_L_Cityscapes_test.pt', type=str)
-    parser.add_argument('--r', help='root or dir for input images', default='../samples/', type=str)
-    parser.add_argument('--t', help='the format of input images (.jpg, .png, ...)', default='.png', type=str)     
+    parser.add_argument('--p', help='dir for pretrained model', default="./best.pt", type=str)
+    parser.add_argument('--r', help='root or dir for input images', default='./samples/', type=str)
+    parser.add_argument('--t', help='the format of input images (.jpg, .png, ...)', default='.jpg', type=str)     
 
     args = parser.parse_args()
 
@@ -57,7 +59,7 @@ def input_transform(image):
     return image
 
 def load_pretrained(model, pretrained):
-    pretrained_dict = torch.load(pretrained, map_location='cpu')
+    pretrained_dict = torch.load(pretrained, map_location='cpu', weights_only=False)
     if 'state_dict' in pretrained_dict:
         pretrained_dict = pretrained_dict['state_dict']
     model_dict = model.state_dict()
@@ -73,22 +75,36 @@ def load_pretrained(model, pretrained):
 
 if __name__ == '__main__':
     args = parse_args()
-    images_list = glob.glob(args.r+'*'+args.t)
-    sv_path = args.r+'outputs/'
+    if os.path.isfile(args.r):
+        images_list = [os.path.basename(args.r)]
+        sv_path = os.path.dirname(args.r) + '/outputs/'
+        img_dir = os.path.dirname(args.r)
+    else:
+        images_list = glob.glob(os.path.join(args.r, '*' + args.t))
+        sv_path = args.r + 'outputs/'
+        img_dir = args.r
     
-    model = models.pidnet.get_pred_model(args.a, 19 if args.c else 11)
+    model = models.pidnet.get_pred_model(args.a, 21)
     model = load_pretrained(model, args.p).cuda()
     model.eval()
+
     with torch.no_grad():
         for img_path in images_list:
-            img_name = img_path.split("\\")[-1]
-            img = cv2.imread(os.path.join(args.r, img_name),
+            print(img_path)
+            img_name = img_path
+            img = cv2.imread(os.path.join(img_dir, img_name),
                                cv2.IMREAD_COLOR)
+            img = cv2.resize(img, (512, 512))
             sv_img = np.zeros_like(img).astype(np.uint8)
             img = input_transform(img)
             img = img.transpose((2, 0, 1)).copy()
             img = torch.from_numpy(img).unsqueeze(0).cuda()
+
+            # Start the timer for an individual prediction
+            start_time = time.time()
             pred = model(img)
+            end_time = time.time()
+
             pred = F.interpolate(pred, size=img.size()[-2:], 
                                  mode='bilinear', align_corners=True)
             pred = torch.argmax(pred, dim=1).squeeze(0).cpu().numpy()
@@ -101,8 +117,10 @@ if __name__ == '__main__':
             if not os.path.exists(sv_path):
                 os.mkdir(sv_path)
             sv_img.save(sv_path+img_name)
-            
-            
-            
+
+            prediction_time = end_time - start_time
+            total_prediction_time = end_time - start_time
+            print(f"Time taken for predictions: {total_prediction_time:.4f} seconds")
+
         
         

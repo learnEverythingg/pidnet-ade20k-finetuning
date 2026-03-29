@@ -200,7 +200,7 @@ def get_seg_model(cfg, imgnet_pretrained):
         logging.info(msg)
         logging.info('Over!!!')
         model.load_state_dict(model_dict, strict = False)
-    else:
+    elif cfg.MODEL.PRETRAINED and cfg.MODEL.PRETRAINED != '':
         pretrained_dict = torch.load(cfg.MODEL.PRETRAINED, map_location='cpu')
         if 'state_dict' in pretrained_dict:
             pretrained_dict = pretrained_dict['state_dict']

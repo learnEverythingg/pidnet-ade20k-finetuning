@@ -1,0 +1,37 @@
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Virtual environment
+venv/
+env/
+*.egg-info/
+*.egg
+
+# Logs
+*.log
+logs/
+
+# Output / checkpoints / models
+output/
+checkpoints/
+*.pth
+*.pt
+
+# Dataset images / tar files
+*.jpg
+*.jpeg
+*.png
+*.tar
+*.zip
+
+# IDE / editor
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# Others
+.DS_Store
