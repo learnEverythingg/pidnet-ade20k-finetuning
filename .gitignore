@@ -15,9 +15,7 @@ env/
 logs/
 logs_small/
 
-# Output / checkpoints / modelsg
-output/
-output_small/
+
 checkpoints/
 *.pth
 *.pt
@@ -29,14 +27,17 @@ checkpoints/
 *.tar
 *.zip
 
+# Allow images inside media folder
+!media/
+!media/*.jpg
+!media/*.jpeg
+!media/*.png
+
 # Data directories (large datasets)
 data/
 
 # Pretrained models
 pretrained_models/
-
-# Sample outputs
-samples/
 
 # Jupyter notebooks
 .ipynb_checkpoints/
