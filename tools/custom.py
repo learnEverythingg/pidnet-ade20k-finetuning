@@ -43,7 +43,7 @@ def parse_args():
     
     parser.add_argument('--a', help='pidnet-s, pidnet-m or pidnet-l', default='pidnet-s', type=str)
     parser.add_argument('--c', help='cityscapes pretrained or not', type=bool, default=True)
-    parser.add_argument('--p', help='dir for pretrained model', default="./best.pt", type=str)
+    parser.add_argument('--p', help='dir for pretrained model', default="output_small/ade20k/pidnet_small_ade20k_trainval/best.pt", type=str)
     parser.add_argument('--r', help='root or dir for input images', default='./samples/', type=str)
     parser.add_argument('--t', help='the format of input images (.jpg, .png, ...)', default='.jpg', type=str)     
 
@@ -91,9 +91,8 @@ if __name__ == '__main__':
     with torch.no_grad():
         for img_path in images_list:
             print(img_path)
-            img_name = img_path
-            img = cv2.imread(os.path.join(img_dir, img_name),
-                               cv2.IMREAD_COLOR)
+            img_name = os.path.basename(img_path)
+            img = cv2.imread(img_path, cv2.IMREAD_COLOR)
             img = cv2.resize(img, (512, 512))
             sv_img = np.zeros_like(img).astype(np.uint8)
             img = input_transform(img)

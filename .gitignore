@@ -13,9 +13,11 @@ env/
 # Logs
 *.log
 logs/
+logs_small/
 
-# Output / checkpoints / models
+# Output / checkpoints / modelsg
 output/
+output_small/
 checkpoints/
 *.pth
 *.pt
@@ -27,11 +29,28 @@ checkpoints/
 *.tar
 *.zip
 
+# Data directories (large datasets)
+data/
+
+# Pretrained models
+pretrained_models/
+
+# Sample outputs
+samples/
+
+# Jupyter notebooks
+.ipynb_checkpoints/
+
 # IDE / editor
 .vscode/
 .idea/
 *.sublime-project
 *.sublime-workspace
 
-# Others
+# OS
 .DS_Store
+Thumbs.db
+*.tmp
+
+# Environment
+.env
