@@ -9,6 +9,7 @@ This project focuses on fine-tuning the PIDNet (Pyramid Information Decoupling N
 The project implements fine-tuning of PIDNet variants (small, medium, large) on the ADE20K dataset, which contains over 20,000 images with 150 semantic categories. This work demonstrates the adaptability of PIDNet for complex scene understanding tasks.
 
 ### Key Features
+
 - Fine-tuning PIDNet models on ADE20K dataset
 - Support for multiple model sizes (small, medium, large)
 - Real-time inference capabilities
@@ -40,7 +41,7 @@ PIDNet/
 │   ├── camvid/                 # Other dataset configs
 │   └── cityscapes/
 ├── data/                       # Dataset storage
-│   └── ADE20K/                 
+│   └── ADE20K/
 │       ├── images/
 │       │   ├── training/
 │       │   └── validation/
@@ -62,8 +63,8 @@ PIDNet/
 │   └── ade20k/
 │       └── pidnet_small_ade20k_trainval/
 │           └── best.pt
-├── pretrained_models/          # Pre-trained weights           
-│   └── imagenet/               # Put Pre-trained model here   
+├── pretrained_models/          # Pre-trained weights
+│   └── imagenet/               # Put Pre-trained model here
 ├── samples/                    # Sample outputs
 │   └── outputs/
 ├── tools/                      # Training and evaluation scripts
@@ -81,6 +82,7 @@ PIDNet/
 ## Installation
 
 ### Prerequisites
+
 - Python 3.7+
 - PyTorch 1.7+
 - CUDA-compatible GPU (recommended for training)
@@ -88,27 +90,49 @@ PIDNet/
 ### Step-by-Step Installation
 
 1. **Clone the repository**:
+
    ```bash
    git clone <repository-url>
-   cd PIDNet
+   cd pidnet-ade20k-finetuning
    ```
 
 2. **Create a virtual environment** (optional but recommended):
+
    ```bash
    python -m venv venv
    source venv/bin/activate  # On Windows: venv\Scripts\activate
    ```
 
 3. **Install dependencies**:
+
    ```bash
+   pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
    pip install -r requirements.txt
    ```
 
 4. **Download ADE20K dataset**:
-   - Visit the [ADE20K website](https://www.kaggle.com/datasets/awsaf49/ade20k-dataset)
+   - Download via CLI (Recommended)
+
+   ```bash
+   wget https://www.kaggle.com/api/v1/datasets/download/awsaf49/ade20k-dataset -O ade20k.zip
+   python -c "import zipfile; zipfile.ZipFile('ade20k.zip').extractall('data/ADE20K/')"
+   move data\ADE20K\ADEChallengeData2016\images data\ADE20K\
+   move data\ADE20K\ADEChallengeData2016\annotations data\ADE20K\
+   ```
+
+   - Or visit the [ADE20K website](https://www.kaggle.com/datasets/awsaf49/ade20k-dataset)
    - Download the ADE20K dataset
    - Extract to `data/ADE20K/` directory
    - Ensure the structure matches the project layout
+
+   After extraction and reorganization, your dataset should look like:
+
+```
+data/ADE20K/
+├── images/
+├── annotations/
+└── objectInfo150.txt
+```
 
 5. **Download pre-trained weights** (optional):
    - Visit the [Pre-trained model](https://drive.google.com/drive/folders/1zWa9du5F332GC_j09oM82MZbERGQwvNd?usp=sharing)
@@ -116,6 +140,7 @@ PIDNet/
    - Extract to `pretrained_models\imagenet`
 
 ### Key Dependencies
+
 - `torch>=1.7.0`: PyTorch deep learning framework
 - `torchvision>=0.8.0`: Computer vision library for PyTorch
 - `numpy>=1.19.0`: Numerical computing
@@ -127,7 +152,9 @@ PIDNet/
 - `matplotlib>=3.0.0`: Plotting library
 
 ## Training
+
 1. **Configuration**: Modify the configuration file `configs/ade20k/pidnet_small_ade20k_trainval.yml` to adjust:
+
 - Learning rate
 - Batch size
 - Number of epochs
@@ -135,8 +162,9 @@ PIDNet/
 - Data augmentation settings
 
 2. **Start Training**
+
 ```bash
-python tools/train.py 
+python tools/train.py
 ```
 
 ### Running Inference with Fine-tuned Model
@@ -144,14 +172,15 @@ python tools/train.py
 To test the model using the fine-tuned checkpoint (best.pt) from this project:
 
 1. **Download fine-tuned model**:
-   - Download the file [best.pt]((https://drive.google.com/drive/folders/1zWa9du5F332GC_j09oM82MZbERGQwvNd?usp=sharing)) is the trained model after fine-tuning on ADE20K
+   - Download the file [best.pt](<(https://drive.google.com/drive/folders/1zWa9du5F332GC_j09oM82MZbERGQwvNd?usp=sharing)>) is the trained model after fine-tuning on ADE20K
    - Place in: `output_small/ade20k/pidnet_small_ade20k_trainval/`
 
 2. **Prepare test images**:
    - Place your test images (e.g., `.jpg` or `.png` files) in the `samples/` directory
-   - Supported formats: JPG, PNG 
+   - Supported formats: JPG, PNG
 
 3. **Run inference**:
+
    ```bash
    python tools/custom.py
    ```
@@ -164,11 +193,13 @@ To test the model using the fine-tuned checkpoint (best.pt) from this project:
 This will process all PNG images in `samples/` and save the segmentation results in `samples/outputs/`.
 
 ## Results
+
 The fine-tuned PIDNet model demonstrates strong performance in segmenting major regions of the scene, such as the sky, buildings, and ground. The output shows clear separation between large structures and background areas, indicating effective global scene understanding. However, some fine details and thin structures are less accurately captured.
 
 ![result_segmentation](media/Segmentation_Results.jpg)
 
 ### Performance Metrics
+
 Based on the training logs, the fine-tuned PIDNet-small model achieved:
 
 - **Mean IoU**: 45.2% on ADE20K validation set
@@ -177,12 +208,15 @@ Based on the training logs, the fine-tuned PIDNet-small model achieved:
 - **Inference Speed**: ~45 FPS on 512x512 images
 
 ### Sample Results
+
 - Model checkpoints saved in `output_small/ade20k/pidnet_small_ade20k_trainval/`
 - Best model: `best.pt`
 - Sample segmentation outputs available in `samples/outputs/`
 
 ### Training Curves
+
 Use `Plot_Metrics.ipynb` to visualize training metrics including:
+
 - Loss curves
 - mIoU progression
 - Learning rate schedules
