@@ -172,7 +172,7 @@ python tools/train.py
 To test the model using the fine-tuned checkpoint (best.pt) from this project:
 
 1. **Download fine-tuned model**:
-   - Download the file [best.pt](<(https://drive.google.com/drive/folders/1zWa9du5F332GC_j09oM82MZbERGQwvNd?usp=sharing)>) is the trained model after fine-tuning on ADE20K
+   - Download the file [best.pt](https://drive.google.com/drive/folders/1zWa9du5F332GC_j09oM82MZbERGQwvNd?usp=sharing) is the trained model after fine-tuning on ADE20K
    - Place in: `output_small/ade20k/pidnet_small_ade20k_trainval/`
 
 2. **Prepare test images**:
